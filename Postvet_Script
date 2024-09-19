@@ -1,0 +1,14 @@
+SELECT FirstName as [Customer Name],
+LastName as [Customer Surname],
+SAIdentity as [ID Number],
+GrossIncome as [Gross Income],
+NetIncome as [Net Income],
+OtherIncome as [Other Income],
+MonthlyExpenses as [Expenses],
+BankName as [Bank Name],
+BranchCode as [Account Number Branch Code],
+AccountType as [Account Type],
+DebitOrderDate as [Debit Order Date],
+CASE WHEN FirstName IS NOT NULL THEN 'TMCV' ELSE NULL END AS [Campaign]
+FROM dbo.Customer
+WHERE BankName IS NOT NULL
