@@ -9,6 +9,10 @@ BankName as [Bank Name],
 BranchCode as [Account Number Branch Code],
 AccountType as [Account Type],
 DebitOrderDate as [Debit Order Date],
+CASE WHEN SAIdentity IS NOT NULL THEN 'N/A' ELSE NULL END AS [XDS Date],
+CASE WHEN SAIdentity IS NOT NULL THEN 'N/A' ELSE NULL END AS [XDS Score],
+CASE WHEN SAIdentity IS NOT NULL THEN 'N/A' ELSE NULL END AS [XDS Reference],
+CASE WHEN SAIdentity IS NOT NULL THEN 'No' ELSE NULL END AS [Double Deals],
 CASE WHEN FirstName IS NOT NULL THEN 'TMCV' ELSE NULL END AS [Campaign]
 FROM dbo.Customer
-WHERE BankName IS NOT NULL
+WHERE AccountNumber IS NOT NULL
