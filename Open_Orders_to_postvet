@@ -1,0 +1,2 @@
+SELECT * FROM dbo.PostVetView WHERE CreateDate >= '2024-09-09 00:00:00' and NAME = 'AwaitingCreditVetResponse'
+ORDER BY DEALID DESC
