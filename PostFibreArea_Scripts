@@ -1,0 +1,4 @@
+SELECT Lead.ID, Customer.IsExistingCustomer, LeadSourceID, Lead.FirstName, Lead.LastName, StreetName, Suburb, Town, Province, Customer.CellNumber, LeadTracker.Id FROM Lead
+LEFT JOIN LeadTracker ON Lead.Id = LeadTracker.LeadId
+LEFT JOIN Customer ON Customer.ID = Lead.Id
+WHERE StreetName IN ('Insert Street Names') or Suburb IN ('Insert Suburb Names')
