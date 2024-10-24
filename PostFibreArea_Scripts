@@ -1,4 +1,5 @@
-SELECT Lead.ID, Customer.IsExistingCustomer, LeadSourceID, Lead.FirstName, Lead.LastName, StreetName, Suburb, Town, Province, Customer.CellNumber, LeadTracker.Id FROM Lead
+SELECT Lead.ID, Customer.IsExistingCustomer, LeadSource.Name, Lead.FirstName, Lead.LastName, StreetName, Suburb, Town, Province, Lead.CellNumber, LeadTracker.Id as [SourceID] FROM Lead
 LEFT JOIN LeadTracker ON Lead.Id = LeadTracker.LeadId
 LEFT JOIN Customer ON Customer.ID = Lead.Id
-WHERE StreetName IN ('Insert Street Names') or Suburb IN ('Insert Suburb Names')
+LEFT JOIN LeadSource ON LeadSource.ID = Lead.LeadSourceId
+WHERE StreetName  IN ('Insert Street Names') or Suburb IN ('Insert Suburb Names')
