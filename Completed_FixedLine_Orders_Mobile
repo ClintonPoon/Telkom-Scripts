@@ -1,2 +1,2 @@
-SELECT * FROM dbo.OrderMasterFileView WHERE Category = 'Complete' and ProductType = 'FixedLine'and CreateDate >= DATEADD(MONTH, -3, CURRENT_DATE)
+SELECT * FROM dbo.OrderMasterFileView WHERE Category = 'Complete' and ProductType = 'FixedLine'and CreateDate >= DATEADD(MONTH, -1, CURRENT_DATE)
   and CreateDate < DATEADD(MONTH, -2, CURRENT_DATE) ORDER BY CreateDate DESC;
