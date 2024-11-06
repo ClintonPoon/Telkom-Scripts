@@ -1,0 +1,79 @@
+SELECT [Order].[Id],
+Customer.FirstName,
+Customer.LastName,
+Lead.Suburb,
+Lead.Province,
+OrderQueue.Name as [Queue Status],
+OrderQueue.Category,
+Customer.SAIdentity,
+
+CASE 
+        WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 6) AS INT) IS NOT NULL THEN 
+            CASE 
+                WHEN SUBSTRING(Customer.SAIdentity, 1, 2) >= RIGHT(YEAR(GETDATE()), 2)
+                    THEN 1900 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT)
+                ELSE 2000 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT)
+            END
+        ELSE NULL
+    END AS BirthYear,
+    -- Calculate Age
+    CASE 
+        WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 6) AS INT) IS NOT NULL THEN
+            DATEDIFF(YEAR,
+                CAST(
+                    CASE 
+                        WHEN SUBSTRING(Customer.SAIdentity, 1, 2) >= RIGHT(YEAR(GETDATE()), 2)
+                            THEN CONCAT(1900 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                        ELSE CONCAT(2000 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                    END AS DATE)
+                , GETDATE()) 
+            - CASE WHEN MONTH(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) OR 
+                      (MONTH(GETDATE()) = CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) AND DAY(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 5, 2) AS INT))
+                  THEN 1 
+                  ELSE 0 
+              END
+        ELSE NULL
+    END AS Age,
+    -- Determine Sex
+    CASE 
+        WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 7, 1) AS INT) IS NOT NULL THEN
+            CASE 
+                WHEN CAST(SUBSTRING(Customer.SAIdentity, 7, 1) AS INT) >= 5 THEN 'Male'
+                ELSE 'Female'
+            END
+        ELSE NULL
+    END AS Sex,
+
+Customer.EmployerName,
+Customer.Occupation,
+Customer.GrossIncome,
+Customer.NetIncome,
+Customer.MonthlyExpenses,
+Customer.CreateDate,
+AspNetUsers.Username as [Agent Name],
+[Order].[LeadId]
+,[Order].[ProductNotes]
+,[Product].Package
+,[Order].[OrderQueueChangeDate]
+,[Order].[CreateDate]
+,[Order].[ChangeBy]
+,[Order].[ChangeDate]
+,[Order].[OrderRef]
+,[Order].[AccountNo]
+,[Order].[Notes]
+,[Order].[ActivationDate]
+,[Order].[ContractExpiryDate]
+,[Order].[CVToolRef]
+,[Order].[LeadTrackerId]
+,[Order].[CommClaimDate]
+,[Order].[ProcessedBy]
+,[Order].[ProcessedDate]
+,Product.ProductType
+,[Order].[CommissionType]
+  FROM [dbo].[Order]
+  LEFT JOIN Customer ON Customer.ID = [Order].CustomerId
+  LEFT JOIN Lead on Lead.ID = [Order].LeadId
+  LEFT JOIN Product ON Product.ID = [Order].ProductID
+  LEFT JOIN OrderQueue ON OrderQueue.ID = [Order].OrderQueueId
+  LEFT JOIN AspNetUsers ON AspNetUsers.ID = [Order].CreateBy
+  WHERE Product.ProductType = 'Mobile' and GrossIncome IS NOT NULL
