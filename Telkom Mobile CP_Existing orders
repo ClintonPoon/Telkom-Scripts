@@ -1,0 +1,273 @@
+WITH UniqueSAIdentities AS (
+    SELECT 
+        [Order].[Id],
+        Customer.FirstName,
+        Customer.LastName,
+        Lead.Suburb,
+        Lead.Province,
+        OrderQueue.Name as [Queue Status],
+        OrderQueue.Category,
+        Customer.SAIdentity,
+
+        -- Calculate Birth Year
+        CASE 
+            WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 6) AS INT) IS NOT NULL AND 
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT) IS NOT NULL THEN 
+                CASE 
+                    WHEN SUBSTRING(Customer.SAIdentity, 1, 2) >= RIGHT(YEAR(GETDATE()), 2)
+                        THEN 1900 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT)
+                    ELSE 2000 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT)
+                END
+            ELSE NULL
+        END AS BirthYear,
+
+        -- Calculate Age
+        CASE 
+            WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 6) AS INT) IS NOT NULL AND
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT) IS NOT NULL AND 
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) IS NOT NULL AND 
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 5, 2) AS INT) IS NOT NULL THEN
+                DATEDIFF(YEAR,
+                    TRY_CAST(
+                        CASE 
+                            WHEN SUBSTRING(Customer.SAIdentity, 1, 2) >= RIGHT(YEAR(GETDATE()), 2)
+                                THEN CONCAT(1900 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                            ELSE CONCAT(2000 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                        END AS DATE)
+                    , GETDATE()) 
+                - CASE WHEN MONTH(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) OR 
+                          (MONTH(GETDATE()) = CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) AND DAY(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 5, 2) AS INT))
+                      THEN 1 
+                      ELSE 0 
+                  END
+            ELSE NULL
+        END AS Age,
+
+        -- Determine Age Group by calculating 5-year intervals
+        CASE 
+            WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 6) AS INT) IS NOT NULL AND
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT) IS NOT NULL AND 
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) IS NOT NULL AND 
+                 TRY_CAST(SUBSTRING(Customer.SAIdentity, 5, 2) AS INT) IS NOT NULL THEN
+                CAST((DATEDIFF(YEAR,
+                    TRY_CAST(
+                        CASE 
+                            WHEN SUBSTRING(Customer.SAIdentity, 1, 2) >= RIGHT(YEAR(GETDATE()), 2)
+                                THEN CONCAT(1900 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                            ELSE CONCAT(2000 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                        END AS DATE)
+                    , GETDATE()) 
+                - CASE WHEN MONTH(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) OR 
+                          (MONTH(GETDATE()) = CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) AND DAY(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 5, 2) AS INT))
+                      THEN 1 
+                      ELSE 0 
+                  END
+                ) / 5 * 5 AS VARCHAR(3)) + '-' + 
+                CAST((DATEDIFF(YEAR,
+                    TRY_CAST(
+                        CASE 
+                            WHEN SUBSTRING(Customer.SAIdentity, 1, 2) >= RIGHT(YEAR(GETDATE()), 2)
+                                THEN CONCAT(1900 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                            ELSE CONCAT(2000 + CAST(SUBSTRING(Customer.SAIdentity, 1, 2) AS INT), '-', SUBSTRING(Customer.SAIdentity, 3, 2), '-', SUBSTRING(Customer.SAIdentity, 5, 2))
+                        END AS DATE)
+                    , GETDATE()) 
+                - CASE WHEN MONTH(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) OR 
+                          (MONTH(GETDATE()) = CAST(SUBSTRING(Customer.SAIdentity, 3, 2) AS INT) AND DAY(GETDATE()) < CAST(SUBSTRING(Customer.SAIdentity, 5, 2) AS INT))
+                      THEN 1 
+                      ELSE 0 
+                  END
+                ) / 5 * 5 + 4 AS VARCHAR(3))
+            ELSE NULL
+        END AS AgeGroup,
+
+        -- Determine Sex
+        CASE 
+            WHEN TRY_CAST(SUBSTRING(Customer.SAIdentity, 7, 1) AS INT) IS NOT NULL THEN
+                CASE 
+                    WHEN CAST(SUBSTRING(Customer.SAIdentity, 7, 1) AS INT) >= 5 THEN 'Male'
+                    ELSE 'Female'
+                END
+            ELSE NULL
+        END AS Sex,
+
+        Customer.EmployerName,
+        Customer.Occupation,
+        Customer.GrossIncome,
+        Customer.NetIncome,
+        Customer.MonthlyExpenses,
+        Customer.CreateDate AS CustomerCreateDate,  -- Aliased to avoid conflict
+        AspNetUsers.Username as [Agent Name],
+        [Order].[LeadId],
+        [Order].[ProductNotes],
+        [Product].Package,
+        [Order].[OrderQueueChangeDate],
+        [Order].[CreateDate] AS OrderCreateDate,  -- Aliased to avoid conflict
+        [Order].[ChangeBy],
+        [Order].[ChangeDate],
+        [Order].[OrderRef],
+        [Order].[AccountNo],
+        [Order].[Notes],
+        [Order].[ActivationDate],
+        [Order].[ContractExpiryDate],
+        [Order].[CVToolRef],
+        [Order].[LeadTrackerId],
+        [Order].[CommClaimDate],
+        [Order].[ProcessedBy],
+        [Order].[ProcessedDate],
+        Product.ProductType,
+        [Order].[CommissionType],
+        
+        ROW_NUMBER() OVER (PARTITION BY Customer.SAIdentity ORDER BY [Order].[CreateDate] DESC) AS RowNum
+    FROM [dbo].[Order]
+    LEFT JOIN Customer ON Customer.ID = [Order].CustomerId
+    LEFT JOIN Lead ON Lead.ID = [Order].LeadId
+    LEFT JOIN Product ON Product.ID = [Order].ProductID
+    LEFT JOIN OrderQueue ON OrderQueue.ID = [Order].OrderQueueId
+    LEFT JOIN AspNetUsers ON AspNetUsers.ID = [Order].CreateBy
+    WHERE GrossIncome > 0 AND [Order].[LeadId] IN ('2036495',
+'2009188',
+'2036495',
+'2036593',
+'2036606',
+'2036614',
+'250951',
+'2036621',
+'2036622',
+'2036623',
+'2036623',
+'2036624',
+'2036629',
+'2036630',
+'1942142',
+'2036654',
+'291335',
+'2036657',
+'1872956',
+'1941184',
+'2036679',
+'2036680',
+'2036682',
+'2036719',
+'307480',
+'1942516',
+'1942515',
+'2036743',
+'361101',
+'362363',
+'1942515',
+'1566668',
+'2036765',
+'2036766',
+'307480',
+'2036768',
+'379499',
+'613936',
+'2036801',
+'1567312',
+'2036809',
+'2036808',
+'2036817',
+'2036820',
+'1582325',
+'2036836',
+'368474',
+'2036880',
+'2036881',
+'2036880',
+'2036883',
+'2036893',
+'1615662',
+'291847',
+'1585411',
+'1581329',
+'1731611',
+'1791200',
+'2036894',
+'66201',
+'564079',
+'358301',
+'2036905',
+'1725179',
+'1781225',
+'1874300',
+'328212',
+'1767739',
+'2037045',
+'1555554',
+'2037049',
+'1756908',
+'2037063',
+'2037067',
+'2037072',
+'374773',
+'2037083',
+'374773',
+'2037090',
+'1597695',
+'1580853',
+'232105',
+'2037127',
+'2037131',
+'2037135',
+'232105',
+'1673209',
+'2037139',
+'2037161',
+'2037090',
+'1659909',
+'509360',
+'1840825',
+'2037179',
+'2037182',
+'1665561',
+'2037207',
+'1711885',
+'1711885',
+'296394',
+'371748',
+'569863',
+'2037236',
+'1786668',
+'2037239',
+'2037326',
+'2037328',
+'2037329',
+'2037331',
+'2037335',
+'2037345',
+'2037348',
+'2036828',
+'2037351',
+'2037356',
+'2037358',
+'2037371',
+'2037385',
+'2037388',
+'2037408',
+'1831968',
+'2037414',
+'2037423',
+'2037439',
+'1833565',
+'1734544',
+'2037460',
+'2037462',
+'1744033',
+'1810371',
+'2037414',
+'2037488',
+'2037489',
+'2037491',
+'355087',
+'2037504',
+'2037505',
+'2037514',
+'210585',
+'1593932',
+'585335',
+'1734544')
+)
+
+SELECT *
+FROM UniqueSAIdentities
+WHERE RowNum = 1
