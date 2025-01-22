@@ -1,0 +1,4 @@
+SELECT IdentityNo, CONCAT(FirstName, ' ', LastName) AS FullName, FirstName, LastName, CellNumber, AltNumber, Email, Note, StreetNumber, StreetName, Suburb, Town, Province, PostalCode,
+HomeNumber, WorkNumber, Gender, MiddleName, VendorFileId, Cell2, Cell3, Work2, Work3, Home2, Home3
+FROM Lead
+WHERE Lead.ID IN (
