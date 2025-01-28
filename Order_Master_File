@@ -1,0 +1,30 @@
+/****** Object:  View [dbo].[OrderMasterFileView]    Script Date: 28/01/2025 9:52:14 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE VIEW [dbo].[OrderMasterFileView]
+AS
+SELECT dbo.[Order].Id, dbo.Department.Name AS DeptName, dbo.Team.Name AS CreateByTeam, dbo.AspNetUsers.UserName AS CreateByUserName, dbo.[Order].CreateDate, dbo.OrderQueue.Category, dbo.OrderQueue.Name AS OrderQueueName, dbo.Reason.Description AS ReasonDescr, dbo.Product.ProductType, dbo.Product.DealId, 
+           dbo.Product.Package, dbo.Product.Description, dbo.Product.NewSubscription / 1.15 AS SubscriptionExVAT, dbo.Product.NewSubscription AS SubscriptionIncVAT, dbo.[Order].CommissionType, dbo.Product.Upsell, 
+           CASE WHEN dbo.[Order].CommissionType = 'NTF' THEN dbo. Product .NewSubscription / 1.15 WHEN dbo.[Order].CommissionType = 'MIGRATE' THEN dbo. Product .NewSubscription / 1.15 WHEN dbo.[Order].CommissionType = 'UPSELL' THEN dbo. Product .Upsell / 1.15 ELSE 0 END AS AgentRevenue, 
+           CASE WHEN dbo.[Order].CommissionType = 'NTF' THEN dbo. Product .NewSubscription WHEN dbo.[Order].CommissionType = 'MIGRATE' THEN dbo. Product .NewSubscription WHEN dbo.[Order].CommissionType = 'UPSELL' THEN dbo. Product .Upsell ELSE 0 END AS AgentRevenueIncVat, dbo.[Order].ActivationDate, 
+           dbo.[Order].MSISDN, dbo.[Order].OrderRef, dbo.[Order].OrderActionId, dbo.[Order].CRMCustomerId, dbo.[Order].ProductId, dbo.[Order].LeadId, dbo.[Order].LeadTrackerId, dbo.LeadQueue.Name AS LeadQueueName, dbo.Channel.Name AS ChannelName, dbo.MarketingCampaign.Name AS MarketingCampaignName, 
+           dbo.[Order].CommClaimDate, dbo.[Order].CommPaidDate, dbo.[Order].AgentCommPaidDate, dbo.[Order].AgentCommEarnDate, dbo.[Order].CVToolRef, dbo.AspNetUsers.IsLive, dbo.AspNetUsers.ExitDate, Team_1.Name AS FieldAgentTeam, AspNetUsers_1.UserName AS FieldAgentUserName, AspNetUsers_1.FieldAgentType
+FROM   dbo.Department INNER JOIN
+           dbo.[Order] INNER JOIN
+           dbo.OrderQueue ON dbo.[Order].OrderQueueId = dbo.OrderQueue.Id INNER JOIN
+           dbo.Product ON dbo.[Order].ProductId = dbo.Product.Id INNER JOIN
+           dbo.Reason ON dbo.[Order].ReasonId = dbo.Reason.Id INNER JOIN
+           dbo.AspNetUsers ON dbo.[Order].CreateBy = dbo.AspNetUsers.Id INNER JOIN
+           dbo.Team ON dbo.AspNetUsers.TeamId = dbo.Team.Id ON dbo.Department.Id = dbo.[Order].DepartmentId LEFT OUTER JOIN
+           dbo.LeadTracker INNER JOIN
+           dbo.LeadQueue ON dbo.LeadTracker.LeadQueueId = dbo.LeadQueue.Id INNER JOIN
+           dbo.Channel ON dbo.LeadQueue.ChannelId = dbo.Channel.Id INNER JOIN
+           dbo.MarketingCampaign ON dbo.LeadTracker.MarketingCampaignId = dbo.MarketingCampaign.Id ON dbo.[Order].LeadTrackerId = dbo.LeadTracker.Id LEFT OUTER JOIN
+           dbo.Team AS Team_1 INNER JOIN
+           dbo.AspNetUsers AS AspNetUsers_1 ON Team_1.Id = AspNetUsers_1.TeamId ON dbo.[Order].FieldAgentId = AspNetUsers_1.Id
+WHERE (dbo.[Order].DepartmentId = 1)
+GO
