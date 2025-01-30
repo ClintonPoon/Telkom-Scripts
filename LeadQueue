@@ -1,0 +1,15 @@
+  USE [Presencedb]
+  GO
+  Update [dbo].[LeadQueue]
+
+  SET [PresenceServiceId] = CASE [Id]
+       WHEN 384 THEN 1131
+       WHEN 385 THEN 1131
+       WHEN 386 THEN 1131
+END,
+       [PresenceLoadId] = CASE [Id]
+       WHEN 384 THEN 384
+       WHEN 385 THEN 385
+       WHEN 386 THEN 386
+END
+WHERE ID IN (Insert IDs here)
