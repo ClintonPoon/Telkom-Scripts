@@ -1,4 +1,4 @@
-  USE [Presencedb]
+  USE [crmdb]
   GO
   Update [dbo].[LeadQueue]
 
